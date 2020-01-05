@@ -1,4 +1,5 @@
 import org.telegram.telegrambots.api.methods.BotApiMethod;
+import org.telegram.telegrambots.api.methods.send.SendDocument;
 import org.telegram.telegrambots.api.methods.send.SendMessage;
 import org.telegram.telegrambots.api.objects.Message;
 import org.telegram.telegrambots.api.objects.Update;
@@ -8,6 +9,7 @@ import org.telegram.telegrambots.exceptions.TelegramApiException;
 import org.telegram.telegrambots.exceptions.TelegramApiRequestException;
 import org.telegram.telegrambots.updateshandlers.SentCallback;
 
+import java.io.File;
 import java.io.IOException;
 
 public class Bot extends TelegramLongPollingBot {
@@ -53,7 +55,6 @@ public class Bot extends TelegramLongPollingBot {
      */
     public synchronized void sendMsg(String chatId, String s) {
         SendMessage sendMessage = new SendMessage();
-//        sendMessage.enableMarkdown(true);
         sendMessage.setChatId(chatId);
         sendMessage.setText(s);
         try {
@@ -65,6 +66,19 @@ public class Bot extends TelegramLongPollingBot {
                 sendMessage(sendMessage);
             } catch (TelegramApiException ex) {
                 ex.printStackTrace();
+            }
+        }
+    }
+
+    public synchronized void sendFile(String chatId, String path, String type) {
+        if (type.equals("doc")) {
+            SendDocument doc = new SendDocument();
+            doc.setChatId(chatId);
+            doc.setNewDocument(new File(path));
+            try {
+                sendDocument(doc);
+            } catch (TelegramApiException e) {
+                e.printStackTrace();
             }
         }
     }
@@ -122,8 +136,12 @@ public class Bot extends TelegramLongPollingBot {
     public void executeCommandWithArgs(Message args) {
         System.out.println("execut with args=" + args.getText());
         try {
-            String answer = this.commandHandler.processCommand(this.currentCommand, args.getText());
-            this.sendMsg(args.getChatId().toString(), answer);
+            if (Commands.SEND_FILE.getCommandName().equals(this.currentCommand)){
+                this.sendFile(args.getChatId().toString(), args.getText(), "doc");
+            } else {
+                String answer = this.commandHandler.processCommand(this.currentCommand, args.getText());
+                this.sendMsg(args.getChatId().toString(), answer);
+            }
         } catch (IOException | InterruptedException e) {
             e.printStackTrace();
         }

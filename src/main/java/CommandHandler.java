@@ -17,13 +17,10 @@ public class CommandHandler {
     }
 
     public String processCommand(String command, String args) throws IOException, InterruptedException {
-
         ProcessBuilder builder = new ProcessBuilder();
-        if (command.startsWith("/")) {
-            command = command.replaceFirst("/", "");
-        }
-        builder.command("sh", "-c", command + " " + args);
-        System.out.println("Do command = " + "sh -c " + command + " " + args);
+        String cmd = this.formatCommand(command, args);
+        builder.command("sh", "-c", cmd);
+        System.out.println("Do command = " + "sh -c " + cmd);
         Process process = builder.start();
         StreamGobbler streamGobbler =
                 new StreamGobbler(process.getInputStream(), this::saveResultIntoFile);
@@ -32,6 +29,29 @@ public class CommandHandler {
         assert exitCode == 0;
         Thread.sleep(500);
         return this.getResultOfCommand();
+    }
+
+    private String formatCommand(String command, String args) {
+        System.out.println("Format command " + command);
+        String separator = " ";
+        if (Commands.PING.getCommandName().equals(command)){
+            System.out.println("Format ping");
+            return Commands.PING.getCanonicalName() +
+                    separator +
+                    Commands.PING.getDefArgs() +
+                    separator +
+                    args;
+        } else if (Commands.UPTIME.getCommandName().equals(command)) {
+            return Commands.UPTIME.getCanonicalName() +
+                    separator +
+                    Commands.UPTIME.getDefArgs();
+        } else {
+            if (command.startsWith("/")) {
+                command = command.replaceFirst("/", "");
+            }
+            System.out.println("Without Formating");
+            return command + " " + args;
+        }
     }
 
     public void saveResultIntoFile(String line){
