@@ -1,3 +1,6 @@
+import Entity.UptimeStatEntity;
+import org.hibernate.Criteria;
+import org.hibernate.Session;
 import org.telegram.telegrambots.api.methods.BotApiMethod;
 import org.telegram.telegrambots.api.methods.send.SendDocument;
 import org.telegram.telegrambots.api.methods.send.SendMessage;
@@ -11,6 +14,9 @@ import org.telegram.telegrambots.updateshandlers.SentCallback;
 
 import java.io.File;
 import java.io.IOException;
+import java.sql.Timestamp;
+import java.util.List;
+
 
 public class Bot extends TelegramLongPollingBot {
     private static Bot instance;
@@ -37,6 +43,7 @@ public class Bot extends TelegramLongPollingBot {
     @Override
     public void onUpdateReceived(Update update) {
         Message recvdMsg = update.getMessage();
+//        recvdMsg.getFrom().getUserName();
         System.out.println("Recv msg=" + recvdMsg.getMessageId());
         if (this.commandHandler.cmdWithArgs(recvdMsg.getText())){
             this.onCommandWithArgsRecvd(recvdMsg);
@@ -150,10 +157,51 @@ public class Bot extends TelegramLongPollingBot {
     public void executeCommand(Message cmd) {
         System.out.println("execut without args=" + cmd.getText());
         try {
+            if (this.sendDataFromDatabase(cmd.getChatId().toString(), cmd.getText())) {
+                return;
+            }
             String answer = this.commandHandler.processCommand(cmd.getText(), "");
             this.sendMsg(cmd.getChatId().toString(), answer);
+            this.saveDataToDatabase(cmd.getText(), answer);
         } catch (IOException | InterruptedException e) {
             e.printStackTrace();
         }
     }
+
+    private boolean sendDataFromDatabase(String chatId, String cmd) {
+        if (Commands.UPTIME_STAT.getCommandName().equals(cmd)) {
+            Session session = HibernateSessionFactory.getSessionFactory().openSession();
+            Criteria criteria = session.createCriteria(UptimeStatEntity.class);
+            List<UptimeStatEntity> utimes = criteria.list();
+            StringBuilder builder = new StringBuilder();
+            for (UptimeStatEntity utim : utimes) {
+                builder.append(utim.getDate()).append(" : ");
+                builder.append(utim.getValue()).append("\n");
+                System.out.println(builder.toString());
+            }
+            this.sendMsg(chatId, builder.toString());
+            return true;
+        } else if (Commands.HISTORY.getCommandName().equals(cmd)) {
+
+        }
+        return false;
+    }
+
+    private void saveDataToDatabase(String cmd, String data){
+        if (Commands.UPTIME.getCommandName().equals(cmd)){
+            Session session = HibernateSessionFactory.getSessionFactory().openSession();
+            session.beginTransaction();
+
+            UptimeStatEntity uptimeStatEntity = new UptimeStatEntity();
+            uptimeStatEntity.setValue(data);
+            Timestamp t = new Timestamp(System.currentTimeMillis());
+            uptimeStatEntity.setDate(t);
+            session.save(uptimeStatEntity);
+
+            session.getTransaction().commit();
+            session.close();
+        }
+    }
+
+
 }

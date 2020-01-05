@@ -1,8 +1,10 @@
 public enum Commands {
     UPTIME("/uptime", false, "-p"),
+    UPTIME_STAT("/uptime_stat", false),
     PING("/ping", true, "-c 4"),
     LS("/ls", true),
-    SEND_FILE("/send_file", true);
+    SEND_FILE("/send_file", true),
+    HISTORY("/history", false);
 
     private String name;
     private boolean isArgs;
