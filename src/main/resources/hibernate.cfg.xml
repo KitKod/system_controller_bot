@@ -9,8 +9,11 @@
         <property name="connection.username">nikitakamak</property>
         <property name="connection.password">KTFxtL33</property>
 
+
         <mapping resource="UptimeStatEntity.hbm.xml"/>
         <mapping class="Entity.UptimeStatEntity"/>
+        <mapping resource="HistoryEntity.hbm.xml"/>
+        <mapping class="Entity.HistoryEntity"/>
 
 
         <!-- DB schema will be updated if needed -->

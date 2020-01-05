@@ -20,7 +20,8 @@ public class HibernateSessionFactory {
             // so destroy it manually.
             StandardServiceRegistryBuilder.destroy( registry );
 
-            throw new ExceptionInInitializerError("Initial SessionFactory failed" + e);
+//            throw new ExceptionInInitializerError("Initial SessionFactory failed" + e);
+            e.printStackTrace();
         }
         return sessionFactory;
     }
